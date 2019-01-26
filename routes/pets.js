@@ -2,9 +2,16 @@
 const Pet = require('../models/pet');
 
 // PET ROUTES
-module.exports = (app) => {
-
+module.exports = app => {
   // INDEX PET => index.js
+
+  app.get('/search', (req, res) => {
+    term = new RegExp(req.query.term, 'i');
+
+    Pet.find({ $or: [{ name: term }, { species: term }] }).exec((err, pets) => {
+      res.render('pets-index', { pets: pets });
+    });
+  });
 
   // NEW PET
   app.get('/pets/new', (req, res) => {
@@ -15,13 +22,14 @@ module.exports = (app) => {
   app.post('/pets', (req, res) => {
     var pet = new Pet(req.body);
 
-    pet.save()
-      .then((pet) => {
+    pet
+      .save()
+      .then(pet => {
         res.redirect(`/pets/${pet._id}`);
       })
-      .catch((err) => {
+      .catch(err => {
         // Handle Errors
-      }) ;
+      });
   });
 
   // SHOW PET
@@ -41,10 +49,10 @@ module.exports = (app) => {
   // UPDATE PET
   app.put('/pets/:id', (req, res) => {
     Pet.findByIdAndUpdate(req.params.id, req.body)
-      .then((pet) => {
-        res.redirect(`/pets/${pet._id}`)
+      .then(pet => {
+        res.redirect(`/pets/${pet._id}`);
       })
-      .catch((err) => {
+      .catch(err => {
         // Handle Errors
       });
   });
@@ -52,7 +60,7 @@ module.exports = (app) => {
   // DELETE PET
   app.delete('/pets/:id', (req, res) => {
     Pet.findByIdAndRemove(req.params.id).exec((err, pet) => {
-      return res.redirect('/')
+      return res.redirect('/');
     });
   });
-}
+};
