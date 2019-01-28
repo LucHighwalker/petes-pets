@@ -33,13 +33,13 @@ module.exports = app => {
   app.post('/pets', (req, res) => {
     var pet = new Pet(req.body);
 
-    pet
-      .save()
-      .then(pet => {
-        res.redirect(`/pets/${pet._id}`);
+    pet.save()
+      .then((pet) => {
+        res.send({ pet: pet });
       })
-      .catch(err => {
-        // Handle Errors
+      .catch((err) => {
+        // STATUS OF 400 FOR VALIDATIONS
+        res.status(400).send(err.errors);
       });
   });
 
