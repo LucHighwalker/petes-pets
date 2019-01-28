@@ -1,7 +1,7 @@
 // MODELS
 const Pet = require('../models/pet');
 // UPLOADING TO AWS S3
-const multer  = require('multer');
+const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const Upload = require('s3-uploader');
 
@@ -17,15 +17,18 @@ const client = new Upload(process.env.S3_BUCKET, {
     versions: true,
     original: true
   },
-  versions: [{
-    maxWidth: 400,
-    aspect: '16:10',
-    suffix: '-standard'
-  },{
-    maxWidth: 300,
-    aspect: '1:1',
-    suffix: '-square'
-  }]
+  versions: [
+    {
+      maxWidth: 400,
+      aspect: '16:10',
+      suffix: '-standard'
+    },
+    {
+      maxWidth: 300,
+      aspect: '1:1',
+      suffix: '-square'
+    }
+  ]
 });
 
 // PET ROUTES
@@ -59,12 +62,14 @@ module.exports = app => {
   // CREATE PET
   app.post('/pets', upload.single('avatar'), (req, res, next) => {
     var pet = new Pet(req.body);
-    pet.save(function (err) {
+    pet.save(function(err) {
       if (req.file) {
-        client.upload(req.file.path, {}, function (err, versions, meta) {
-          if (err) { return res.status(400).send({ err: err }) };
+        client.upload(req.file.path, {}, function(err, versions, meta) {
+          if (err) {
+            return res.status(400).send({ err: err });
+          }
 
-          versions.forEach(function (image) {
+          versions.forEach(function(image) {
             var urlArray = image.url.split('-');
             urlArray.pop();
             var url = urlArray.join('-');
@@ -77,13 +82,41 @@ module.exports = app => {
       } else {
         res.send({ pet: pet });
       }
-    })
-  })
+    });
+  });
 
   // SHOW PET
   app.get('/pets/:id', (req, res) => {
     Pet.findById(req.params.id).exec((err, pet) => {
       res.render('pets-show', { pet: pet });
+    });
+  });
+
+  // PURCHASE PET
+  app.post('/pets/:id/purchase', (req, res) => {
+    console.log(req.body);
+    // Set your secret key: remember to change this to your live secret key in production
+    // See your keys here: https://dashboard.stripe.com/account/apikeys
+    const stripe = require('stripe')(process.env.PRIVATE_STRIPE_API_KEY);
+
+    // Token is created using Checkout or Elements!
+    // Get the payment token ID submitted by the form:
+    const token = req.body.stripeToken; // Using Express
+
+    Pet.findById(req.params.id).exec((err, pet) => {
+      const charge = stripe.charges
+        .create({
+          amount: pet.price * 100,
+          currency: 'usd',
+          description: `Purchased ${pet.name}, ${pet.species}`,
+          source: token
+        })
+        .then(chg => {
+          res.redirect(`/pets/${req.params.id}`);
+        })
+        .catch(err => {
+          console.log('Error: ' + err);
+        });
     });
   });
 
