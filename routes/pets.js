@@ -1,5 +1,19 @@
 // MODELS
 const Pet = require('../models/pet');
+
+// MAILGUN
+const nodemailer = require('nodemailer');
+const mg = require('nodemailer-mailgun-transport');
+
+const auth = {
+  auth: {
+    api_key: process.env.MAILGUN_API_KEY,
+    domain: process.env.EMAIL_DOMAIN
+  }
+};
+
+const nodemailerMailgun = nodemailer.createTransport(mg(auth));
+
 // UPLOADING TO AWS S3
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
@@ -112,7 +126,32 @@ module.exports = app => {
           source: token
         })
         .then(chg => {
-          res.redirect(`/pets/${req.params.id}`);
+          // Convert the amount back to dollars for ease in displaying in the template
+          const user = {
+            email: req.body.stripeEmail,
+            amount: chg.amount / 100,
+            petName: pet.name
+          };
+          // After we get the pet so we can grab it's name, then we send the email
+          nodemailerMailgun
+            .sendMail({
+              from: 'no-reply@example.com',
+              to: user.email, // An array if you have multiple recipients.
+              subject: 'Pet Purchased!',
+              template: {
+                name: 'email.handlebars',
+                engine: 'handlebars',
+                context: user
+              }
+            })
+            .then(info => {
+              console.log('Response: ' + info);
+              res.redirect(`/pets/${req.params.id}`);
+            })
+            .catch(err => {
+              console.log('Error: ' + err);
+              res.redirect(`/pets/${req.params.id}`);
+            });
         })
         .catch(err => {
           console.log('Error: ' + err);

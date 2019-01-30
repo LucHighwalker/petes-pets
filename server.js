@@ -6,11 +6,31 @@ if (!process.env.PORT) {
 const express = require('express');
 const path = require('path');
 const favicon = require('serve-favicon');
-// morgan is new to me and it logs http requests.
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const methodOverride = require('method-override')
+const methodOverride = require('method-override');
+
+// const user = {
+//   email: 'email@luc.gg',
+//   name: 'Emily',
+//   age: '43'
+// };
+
+// nodemailerMailgun.sendMail({
+//   from: 'no-reply@example.com',
+//   to: user.email, // An array if you have multiple recipients.
+//   subject: 'Hey you, awesome!',
+//   template: {
+//     name: 'email.handlebars',
+//     engine: 'handlebars',
+//     context: user
+//   }
+// }).then(info => {
+//   console.log('Response: ' + info);
+// }).catch(err => {
+//   console.log('Error: ' + err);
+// });
 
 const app = express();
 
