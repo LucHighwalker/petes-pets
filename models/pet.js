@@ -21,6 +21,14 @@ const PetSchema = new Schema({
   price: { type: Number, required: true }
 });
 
+PetSchema.index(
+  { name: 'text', species: 'text', favoriteFood: 'text', description: 'text' },
+  {
+    name: 'My text index',
+    weights: { name: 10, species: 4, favoriteFood: 2, description: 1 }
+  }
+);
+
 PetSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('Pet', PetSchema);
